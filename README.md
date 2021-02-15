@@ -1,4 +1,17 @@
-# D0003ELabb3
+# D0003E Lab3
 
-Soon may the tendieman come to send our rocket into the sun
-One day when the trading is done we'll take our gains and go.
+Diggi-diggi-diggi-ding-ding-ding
+
+Här glider kingen in
+
+Diggi-diggi-diggi-ding-ding-ding
+
+Här glider kingen in
+
+Diggi-diggi-diggi-ding-ding-ding
+
+Här glider kingen in
+
+Diggi-diggi-diggi-ding-ding-ding
+
+Här glider kingen in
