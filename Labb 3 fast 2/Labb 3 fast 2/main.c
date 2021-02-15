@@ -1,26 +1,16 @@
 /*
- * Labb3.c
+ * Labb 3 fast 2.c
  *
- * Created: 2021-02-15 13:10:07
+ * Created: 2021-02-15 14:01:08
  * Author : hjall
  */ 
 
 #include <avr/io.h>
-#include <avr/portpins.h>
-#include <stdint.h>
 
 
 int main(void)
 {
     /* Replace with your application code */
-	CLKPR = 0x80;
-	CLKPR = 0x00;
-	
-	LCD_init();
-	spawn(button);
-	spawn(blink);
-	primes(30000);
-	
     while (1) 
     {
     }
@@ -103,13 +93,13 @@ void primes(long i){
 void blink(void){
 	TCCR1B = TCCR1B|0x04; // detta ändrar CS12 till 1, vilket ändrar prescaling till 256
 	int light = 0; // light bestämmer om lampan är av eller på
-	unsigned short time = 3906; // 8000000/1024 = 7813, för en sekund, alltså 3906 för en blinkning
+	unsigned short time = 3906; // 8000000/256 = 31250, för en sekund, alltså 15625 för en blinkning
 	// short är 2 byte, precis som timern, alltså kommer den att börja om på noll lika fort som timerregistret
 	//TCNT1 = 0x0000;
 	
 	while(1){
 		
-		if(timekeeper >= time){
+		if(TCNT1 == time){
 			if(light){
 				LCDDR0 = LCDDR0 & 0x99; // om den är på slår vi av den
 				}else{
@@ -152,5 +142,3 @@ void button(void)
 		
 	}
 }
-
-
