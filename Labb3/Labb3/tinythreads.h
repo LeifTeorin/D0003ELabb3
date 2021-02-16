@@ -11,6 +11,7 @@ struct thread_block;
 typedef struct thread_block *thread;
 void spawn(void (*code)(int), int arg);
 void yield(void);
+unsigned short timekeeper;
 
 struct mutex_block {
     int locked;

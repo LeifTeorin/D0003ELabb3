@@ -147,7 +147,7 @@ void unlock(mutex *m) {
 		/*thread p = *m->waitQ;
 		*m->waitQ = *m->waitQ->next;
 		dispatch(p);*/
-		enqueue(current, readyQ);
+		enqueue(current, &readyQ);
 		dispatch(dequeue(&(m->waitQ)));
 	}
 	ENABLE();

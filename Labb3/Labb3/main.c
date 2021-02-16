@@ -8,23 +8,24 @@
 #include <avr/io.h>
 #include <avr/portpins.h>
 #include <stdint.h>
-#include <tinythreads.h>
+#include "tinythreads.h"
 
-int main(void)
+int characters[13] =
 {
-    /* Replace with your application code */
-	CLKPR = 0x80;
-	CLKPR = 0x00;
-	
-	LCD_init();
-	spawn(button);
-	spawn(blink);
-	primes(30000);
-	
-    while (1) 
-    {
-    }
-}
+	0x1551,		// 0
+	0x0118,		// 1
+	0x1e11,		// 2
+	0x1b11,		// 3
+	0x0b50,		// 4
+	0x1b41,		// 5
+	0x1f41,		// 6
+	0x4009,		// 7
+	0x1f51,		// 8
+	0x1b51,		// 9
+	0x0f50,		// H
+	0x1641,		// E
+	0x1510		// J
+};
 
 void LCD_init(void){
 	LCDCRA |= 0x80; // LCD enable
@@ -41,8 +42,8 @@ void writeChar(char ch, int pos){
 	char mask_reg;
 	char currbyte = 0x00;
 	int character = 0;
-	char *ptr;
-	ptr  = &LCDDR0; // pekaren börjar på lcddr0
+	volatile unsigned char *ptr;
+	ptr = &LCDDR0;
 	
 	if((int)ch > -1 && (int)ch < 10){
 		character = characters[(int)ch];
@@ -100,8 +101,7 @@ void primes(long i){
 	}
 }
 
-void blink(void){
-	TCCR1B = TCCR1B|0x04; // detta ändrar CS12 till 1, vilket ändrar prescaling till 256
+void blink(int something){
 	int light = 0; // light bestämmer om lampan är av eller på
 	unsigned short time = 3906; // 8000000/1024 = 7813, för en sekund, alltså 3906 för en blinkning
 	// short är 2 byte, precis som timern, alltså kommer den att börja om på noll lika fort som timerregistret
@@ -123,7 +123,7 @@ void blink(void){
 	
 }
 
-void button(void)
+void button(int something)
 {
 	int buttonpress = 0;
 	LCDDR0 |= 0x06;
@@ -153,4 +153,18 @@ void button(void)
 	}
 }
 
-
+int main(void)
+{
+	/* Replace with your application code */
+	CLKPR = 0x80;
+	CLKPR = 0x00;
+	
+	LCD_init();
+	spawn(button, 1);
+	spawn(blink, 0);
+	primes(30000);
+	
+	while (1)
+	{
+	}
+}
