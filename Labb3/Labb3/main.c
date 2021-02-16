@@ -8,7 +8,7 @@
 #include <avr/io.h>
 #include <avr/portpins.h>
 #include <stdint.h>
-
+#include <tinythreads.h>
 
 int main(void)
 {

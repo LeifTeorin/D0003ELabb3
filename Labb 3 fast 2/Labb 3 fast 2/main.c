@@ -5,12 +5,24 @@
  * Author : hjall
  */ 
 
+#include "tinythreads.h"
+#include <stdbool.h>
 #include <avr/io.h>
+#include <avr/interrupt.h>
 
 
 int main(void)
 {
     /* Replace with your application code */
+	CLKPR = 0x80;
+	CLKPR = 0x00;
+	LCD_init();
+	lock(&m1);
+	lock(&m2);
+	
+	spawn(button);
+	spawn(blink);
+	primes(30000);
     while (1) 
     {
     }
@@ -91,34 +103,26 @@ void primes(long i){
 }
 
 void blink(void){
-	TCCR1B = TCCR1B|0x04; // detta ändrar CS12 till 1, vilket ändrar prescaling till 256
 	int light = 0; // light bestämmer om lampan är av eller på
-	unsigned short time = 3906; // 8000000/256 = 31250, för en sekund, alltså 15625 för en blinkning
-	// short är 2 byte, precis som timern, alltså kommer den att börja om på noll lika fort som timerregistret
-	//TCNT1 = 0x0000;
 	
 	while(1){
-		
-		if(TCNT1 == time){
-			if(light){
-				LCDDR0 = LCDDR0 & 0x99; // om den är på slår vi av den
-				}else{
-				LCDDR0 = LCDDR0 | 0x60; // annars slår vi på den
-			}
-			light = ~light; // vi ändrar light för att indikera att lampan är av/på
-			time += 3906;
+		lock(&m1);
+		if(light){
+			LCDDR0 = LCDDR0 & 0x99; // om den är på slår vi av den
+			}else{
+			LCDDR0 = LCDDR0 | 0x60; // annars slår vi på den
 		}
+		light = ~light; // vi ändrar light för att indikera att lampan är av/på*/
 		
 	}
-	
 }
 
 void button(void)
 {
 	int buttonpress = 0;
 	LCDDR0 |= 0x06;
-	while(1)
-	{
+	while(1){
+		lock(&m2);
 		if (!(PINB&0x80) && buttonpress == 0) // PINB7 = 0, när den är intryckt
 		{									  // vi byter läge endast då knappen är nedtryckt och den nyss inte var det
 			buttonpress = 1;
@@ -137,8 +141,6 @@ void button(void)
 		{
 			buttonpress = 0;
 		}
-
-		
 		
 	}
 }

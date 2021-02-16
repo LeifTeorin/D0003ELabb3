@@ -27,6 +27,8 @@ thread freeQ   = threads;
 thread readyQ  = NULL;
 thread current = &initp;
 
+mutex m1 = MUTEX_INIT; // för lampan
+mutex m2 = MUTEX_INIT; // för spaken
 unsigned short timekeeper = 0;
 int initialized = 0;
 
@@ -41,6 +43,20 @@ static void initialize(void) {
 	TCCR1A = 0xC0;
 	TCCR1B = 0x18;
 	
+	//OC1A is set high on compare match.
+	TCCR1A = (1 << COM1A0) | (1 << COM1A1);
+	
+	// Set timer to CTC and prescale Factor on 1024.
+	TCCR1B = (1 << WGM12) | (1 << CS10) |(1 << CS12);
+	
+	// Set Value to around 50ms. 8000000/20480 = 390.625
+	OCR1A = 3906;
+	
+	//clearing the TCNT1 register during initialization.
+	TCNT1 = 0x0;
+	
+	//Compare a match interrupt Enable.
+	TIMSK1 = (1 << OCIE1A);
 	
 	initialized = 1;
 }
@@ -50,13 +66,13 @@ static void enqueue(thread p, thread *queue) {
 	*queue = p;
 }
 
-static thread dequeue(thread *queue) {
+static thread dequeue(thread *queue) { // dequeue hämtar nu den som är näst längst fram för annars byter vi aldrig tråd
 	thread p = *queue;
 	if (*queue) {
 		*queue = (*queue)->next;
-		} else {
+	} else {
 		// Empty queue, kernel panic!!!
-		while (1) ;  // not much else to do...
+		while (1) ; // not much else to do...
 	}
 	return p;
 }
@@ -136,13 +152,12 @@ ISR(PCINT1_vect)
 {
 	if ((PINB >> 7) == 1)
 	{
-		yield();
+		unlock(&m2);
 	}
 }
 //Om timern säger till, yielda
 
-/*ISR(TIMER1_COMPA_vect)
+ISR(TIMER1_COMPA_vect)
 {
-	timekeeper += 391;
-	yield();
-}*/
+	unlock(&m1);
+}
