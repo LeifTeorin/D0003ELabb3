@@ -27,7 +27,7 @@ thread freeQ   = threads;
 thread readyQ  = NULL;
 thread current = &initp;
 
-unsigned short timekeeper = 0;
+int timekeeper;
 int initialized = 0;
 
 static void initialize(void) {
@@ -55,6 +55,8 @@ static void initialize(void) {
 	
 	//Compare a match interrupt Enable.
 	TIMSK1 = (1 << OCIE1A);
+	
+	timekeeper = 0;
 	
 	initialized = 1;
 }
@@ -154,13 +156,13 @@ void unlock(mutex *m) {
 }
 
 //om interrupt på pinb7 yielda
-ISR(PCINT1_vect)
+/*ISR(PCINT1_vect)
 {
 	if ((PINB >> 7) == 1)
 	{
 		yield();
 	}
-}
+}*/
 //Om timern säger till, yielda
 ISR(TIMER1_COMPA_vect)
 {

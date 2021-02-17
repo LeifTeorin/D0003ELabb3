@@ -84,6 +84,13 @@ void writeLong(long i){
 	
 }
 
+void printAt(long num, int pos) {
+	int pp = pos;
+	writeChar( ((num % 100) / 10), pp);
+	pp++;
+	writeChar( (num % 10), pp);
+}
+
 int is_prime(long i){
 	for(int x = 2; x < i; x++){
 		if(i%x == 0){
@@ -96,7 +103,7 @@ int is_prime(long i){
 void primes(long i){
 	for(int x = 2; x < i; x++){
 		if(is_prime(x)){
-			writeLong(x);
+			printAt(x, 0);
 		}
 	}
 }
@@ -109,14 +116,14 @@ void blink(int something){
 	
 	while(1){
 		
-		if(timekeeper >= time){
+		if(timekeeper >= 3906){
 			if(light){
-				LCDDR0 = LCDDR0 & 0x99; // om den är på slår vi av den
+				LCDDR1 = LCDDR1 & 0xF0; // om den är på slår vi av den
 				}else{
-				LCDDR0 = LCDDR0 | 0x60; // annars slår vi på den
+				LCDDR1 = LCDDR1 | 0x0F; // annars slår vi på den
 			}
 			light = ~light; // vi ändrar light för att indikera att lampan är av/på
-			time += 3906;
+			timekeeper = 0;
 		}
 		
 	}
@@ -126,21 +133,21 @@ void blink(int something){
 void button(int something)
 {
 	int buttonpress = 0;
-	LCDDR0 |= 0x06;
+	LCDDR2 = 0x0F;
 	while(1)
 	{
 		if (!(PINB&0x80) && buttonpress == 0) // PINB7 = 0, när den är intryckt
 		{									  // vi byter läge endast då knappen är nedtryckt och den nyss inte var det
 			buttonpress = 1;
-			if ((LCDDR0&0x06)) // vi ser om det ena läget är på
+			if ((LCDDR2&0x0F)) // vi ser om det ena läget är på
 			{
-				LCDDR0 = LCDDR0 & 0xf9; // slår av
-				LCDDR1 = LCDDR1 | 0x60; // slår på
+				LCDDR2 = LCDDR2 & 0xf0; // slår av
+				LCDDR2 = LCDDR2 | 0xf0; // slår på
 			}
 			else // annars är det ju det andra läget
 			{
-				LCDDR0 = LCDDR0 | 0x06; // slår på
-				LCDDR1 = LCDDR1 & 0x9f; // slår av
+				LCDDR2 = LCDDR2 | 0x0f; // slår på
+				LCDDR2 = LCDDR2 & 0x0f; // slår av
 			}
 		}
 		if((PINB&0x80) && buttonpress == 1) // om den inte är nedtryckt blir buttonpress noll
@@ -160,8 +167,8 @@ int main(void)
 	CLKPR = 0x00;
 	
 	LCD_init();
-	spawn(button, 1);
 	spawn(blink, 0);
+	spawn(button, 1);
 	primes(30000);
 	
 	while (1)
