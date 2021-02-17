@@ -3,6 +3,7 @@
  *
  * Created: 2021-02-15 14:01:08
  * Author : hjall
+ * Author : crill
  */ 
 
 #include "tinythreads.h"
@@ -111,22 +112,11 @@ void primes(int i){
 		}
 	}
 }
-
+int light = 0;
 void blink(void){
-	int light = 0; // light bestämmer om lampan är av eller på
-	
-	while(1){
-		lock(&m1);
-		if(timekeeper){
-			if(light){
-				printAt(0, 2); // om den ?r p? sl?r vi av den
-				}else{
-				printAt(69, 2); // annars sl?r vi p? den
-			}
-			light = ~light; // vi ?ndrar light f?r att indikera att lampan ?r av/p?
-			timekeeper = 0;
-		}
-	}
+	 // light bestämmer om lampan är av eller på
+	spawn(&m1);
+	light = ~light;
 }
 
 void button(void)
@@ -200,8 +190,7 @@ ISR(PCINT1_vect)
 {
 	if ((PINB >> 7) == 1)
 	{
-		unlock(&m2);
-		
+		spawn(button, 69);
 	}
 }
 //Om timern säger till, yielda
@@ -209,6 +198,5 @@ ISR(PCINT1_vect)
 ISR(TIMER1_COMPA_vect)
 {
 	timekeeper = 1;
-	unlock(&m1);
-	
+	spawn(blink, 420);
 }
