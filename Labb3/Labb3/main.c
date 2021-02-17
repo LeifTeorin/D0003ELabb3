@@ -27,6 +27,8 @@ int characters[13] =
 	0x1510		// J
 };
 
+mutex blinkmutex = MUTEX_INIT;
+
 void LCD_init(void){
 	LCDCRA |= 0x80; // LCD enable
 	LCDCRB = 0xb7; // 1/3 bias och 1/4 duty, asynk-klockan används och 25 segment används
@@ -100,7 +102,7 @@ int is_prime(long i){
 	return 1;
 }
 
-void primes(long i){
+void primes(int i){
 	for(int x = 2; x < i; x++){
 		if(is_prime(x)){
 			printAt(x, 0);
@@ -110,22 +112,21 @@ void primes(long i){
 
 void blink(int something){
 	int light = 0; // light bestämmer om lampan är av eller på
-	unsigned short time = 3906; // 8000000/1024 = 7813, för en sekund, alltså 3906 för en blinkning
 	// short är 2 byte, precis som timern, alltså kommer den att börja om på noll lika fort som timerregistret
 	//TCNT1 = 0x0000;
 	
 	while(1){
-		
-		if(timekeeper >= 3906){
+		lock(&blinkmutex);
+		if(timekeeper > 10){
 			if(light){
-				LCDDR1 = LCDDR1 & 0xF0; // om den är på slår vi av den
+				printAt(0, 2); // om den är på slår vi av den
 				}else{
-				LCDDR1 = LCDDR1 | 0x0F; // annars slår vi på den
+				printAt(69, 2); // annars slår vi på den
 			}
 			light = ~light; // vi ändrar light för att indikera att lampan är av/på
 			timekeeper = 0;
 		}
-		
+		unlock(&blinkmutex);
 	}
 	
 }
@@ -133,29 +134,27 @@ void blink(int something){
 void button(int something)
 {
 	int buttonpress = 0;
-	LCDDR2 = 0x0F;
+	int lastvalue = 0;
+	printAt(80, 4);
 	while(1)
 	{
 		if (!(PINB&0x80) && buttonpress == 0) // PINB7 = 0, när den är intryckt
 		{									  // vi byter läge endast då knappen är nedtryckt och den nyss inte var det
 			buttonpress = 1;
-			if ((LCDDR2&0x0F)) // vi ser om det ena läget är på
+			if (lastvalue) // vi ser om det ena läget är på
 			{
-				LCDDR2 = LCDDR2 & 0xf0; // slår av
-				LCDDR2 = LCDDR2 | 0xf0; // slår på
+				printAt(80, 4);
 			}
 			else // annars är det ju det andra läget
 			{
-				LCDDR2 = LCDDR2 | 0x0f; // slår på
-				LCDDR2 = LCDDR2 & 0x0f; // slår av
+				printAt(8, 4);
 			}
+			lastvalue = ~lastvalue;
 		}
 		if((PINB&0x80) && buttonpress == 1) // om den inte är nedtryckt blir buttonpress noll
 		{
 			buttonpress = 0;
 		}
-
-		
 		
 	}
 }
@@ -167,9 +166,9 @@ int main(void)
 	CLKPR = 0x00;
 	
 	LCD_init();
-	spawn(blink, 0);
+	spawn(primes, 10000);
 	spawn(button, 1);
-	primes(30000);
+	blink(30000);
 	
 	while (1)
 	{

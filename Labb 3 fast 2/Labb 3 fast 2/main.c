@@ -10,23 +10,22 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-
-int main(void)
+int characters[13] =
 {
-    /* Replace with your application code */
-	CLKPR = 0x80;
-	CLKPR = 0x00;
-	LCD_init();
-	lock(&m1);
-	lock(&m2);
-	
-	spawn(button);
-	spawn(blink);
-	primes(30000);
-    while (1) 
-    {
-    }
-}
+	0x1551,		// 0
+	0x0118,		// 1
+	0x1e11,		// 2
+	0x1b11,		// 3
+	0x0b50,		// 4
+	0x1b41,		// 5
+	0x1f41,		// 6
+	0x4009,		// 7
+	0x1f51,		// 8
+	0x1b51,		// 9
+	0x0f50,		// H
+	0x1641,		// E
+	0x1510		// J
+};
 
 void LCD_init(void){
 	LCDCRA |= 0x80; // LCD enable
@@ -85,6 +84,13 @@ void writeLong(long i){
 	
 }
 
+void printAt(long num, int pos) {
+	int pp = pos;
+	writeChar( ((num % 100) / 10), pp);
+	pp++;
+	writeChar( (num % 10), pp);
+}
+
 int is_prime(long i){
 	for(int x = 2; x < i; x++){
 		if(i%x == 0){
@@ -94,53 +100,72 @@ int is_prime(long i){
 	return 1;
 }
 
-void primes(long i){
+void primes(int i){
 	for(int x = 2; x < i; x++){
 		if(is_prime(x)){
-			writeLong(x);
+			printAt(x, 0);
 		}
 	}
 }
 
 void blink(void){
 	int light = 0; // light bestämmer om lampan är av eller på
+	int loopPrevent = 1;
 	
 	while(1){
 		lock(&m1);
-		if(light){
-			LCDDR0 = LCDDR0 & 0x99; // om den är på slår vi av den
-			}else{
-			LCDDR0 = LCDDR0 | 0x60; // annars slår vi på den
+		if(timekeeper){
+			if(light){
+				printAt(0, 2); // om den ?r p? sl?r vi av den
+				}else{
+				printAt(69, 2); // annars sl?r vi p? den
+			}
+			light = ~light; // vi ?ndrar light f?r att indikera att lampan ?r av/p?
 		}
-		light = ~light; // vi ändrar light för att indikera att lampan är av/på*/
-		
+		timekeeper = 0;
 	}
 }
 
 void button(void)
 {
 	int buttonpress = 0;
-	LCDDR0 |= 0x06;
-	while(1){
+	int lastvalue = 0;
+	printAt(80, 4);
+	while(1)
+	{
 		lock(&m2);
 		if (!(PINB&0x80) && buttonpress == 0) // PINB7 = 0, när den är intryckt
 		{									  // vi byter läge endast då knappen är nedtryckt och den nyss inte var det
 			buttonpress = 1;
-			if ((LCDDR0&0x06)) // vi ser om det ena läget är på
+			if (lastvalue) // vi ser om det ena läget är på
 			{
-				LCDDR0 = LCDDR0 & 0xf9; // slår av
-				LCDDR1 = LCDDR1 | 0x60; // slår på
+				printAt(80, 4);
 			}
 			else // annars är det ju det andra läget
 			{
-				LCDDR0 = LCDDR0 | 0x06; // slår på
-				LCDDR1 = LCDDR1 & 0x9f; // slår av
+				printAt(8, 4);
 			}
+			lastvalue = ~lastvalue;
 		}
 		if((PINB&0x80) && buttonpress == 1) // om den inte är nedtryckt blir buttonpress noll
 		{
 			buttonpress = 0;
 		}
 		
+	}
+}
+
+int main(void)
+{
+	/* Replace with your application code */
+	CLKPR = 0x80;
+	CLKPR = 0x00;
+	LCD_init();
+	
+	spawn(button, 3);
+	spawn(blink, 2);
+	primes(10000);
+	while (1)
+	{
 	}
 }

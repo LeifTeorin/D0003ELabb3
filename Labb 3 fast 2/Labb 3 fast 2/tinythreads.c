@@ -29,7 +29,7 @@ thread current = &initp;
 
 mutex m1 = MUTEX_INIT; // för lampan
 mutex m2 = MUTEX_INIT; // för spaken
-unsigned short timekeeper = 0;
+int timekeeper = 1;
 int initialized = 0;
 
 static void initialize(void) {
@@ -58,12 +58,21 @@ static void initialize(void) {
 	//Compare a match interrupt Enable.
 	TIMSK1 = (1 << OCIE1A);
 	
+	lock(&m1);
+	lock(&m2);
+	
 	initialized = 1;
 }
 
 static void enqueue(thread p, thread *queue) {
-	p->next = *queue;
-	*queue = p;
+	p->next = NULL;
+	if(*queue == NULL){
+		*queue = p;
+	}else{
+		p->next = *queue;
+		*queue = p;
+	}
+	
 }
 
 static thread dequeue(thread *queue) { // dequeue hämtar nu den som är näst längst fram för annars byter vi aldrig tråd
@@ -99,9 +108,11 @@ void spawn(void (* function)(int), int arg) {
 		current->function(current->arg);
 		DISABLE();
 		enqueue(current, &freeQ);
+		dispatch(dequeue(&readyQ));
 	}
 	SETSTACK(&newp->context, &newp->stack);
 
+	enqueue(current, &readyQ);
 	dispatch(newp);
 	ENABLE();
 }
@@ -159,5 +170,6 @@ ISR(PCINT1_vect)
 
 ISR(TIMER1_COMPA_vect)
 {
+	timekeeper = 1;
 	unlock(&m1);
 }

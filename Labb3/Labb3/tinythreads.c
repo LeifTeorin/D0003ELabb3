@@ -166,6 +166,6 @@ void unlock(mutex *m) {
 //Om timern säger till, yielda
 ISR(TIMER1_COMPA_vect)
 {
-	timekeeper += 391;
+	timekeeper ++;
 	yield();
 }

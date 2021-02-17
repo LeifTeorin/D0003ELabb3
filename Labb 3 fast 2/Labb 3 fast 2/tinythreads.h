@@ -21,6 +21,9 @@ typedef struct mutex_block mutex;
 #define MUTEX_INIT {0,0}
 void lock(mutex *m);
 void unlock(mutex *m);
+extern mutex m1;
+extern mutex m2;
+extern int timekeeper;
 
 #endif
 
