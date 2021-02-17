@@ -115,7 +115,11 @@ void primes(int i){
 int light = 0;
 void blink(void){
 	 // light bestämmer om lampan är av eller på
-	spawn(&m1);
+	if(light){
+		LCDDR0 = LCDDR0 & 0x99; // om den är på slår vi av den
+	}else{
+		LCDDR0 = LCDDR0 | 0x60; // annars slår vi på den
+	}
 	light = ~light;
 }
 
