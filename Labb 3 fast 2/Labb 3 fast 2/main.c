@@ -10,6 +10,10 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+mutex m1 = MUTEX_INIT; // för lampan
+mutex m2 = MUTEX_INIT; // för spaken
+int timekeeper = 1;
+
 int characters[13] =
 {
 	0x1551,		// 0
@@ -110,7 +114,6 @@ void primes(int i){
 
 void blink(void){
 	int light = 0; // light bestämmer om lampan är av eller på
-	int loopPrevent = 1;
 	
 	while(1){
 		lock(&m1);
@@ -121,8 +124,8 @@ void blink(void){
 				printAt(69, 2); // annars sl?r vi p? den
 			}
 			light = ~light; // vi ?ndrar light f?r att indikera att lampan ?r av/p?
+			timekeeper = 0;
 		}
-		timekeeper = 0;
 	}
 }
 
@@ -134,7 +137,7 @@ void button(void)
 	while(1)
 	{
 		lock(&m2);
-		if (!(PINB&0x80) && buttonpress == 0) // PINB7 = 0, när den är intryckt
+		if (buttonpress == 0) // PINB7 = 0, när den är intryckt
 		{									  // vi byter läge endast då knappen är nedtryckt och den nyss inte var det
 			buttonpress = 1;
 			if (lastvalue) // vi ser om det ena läget är på
@@ -161,6 +164,28 @@ int main(void)
 	CLKPR = 0x80;
 	CLKPR = 0x00;
 	LCD_init();
+	PORTB = (1<<PB7);
+	EIMSK = 0x80;
+	PCMSK1 = 0x80;
+	TCCR1A = 0xC0;
+	TCCR1B = 0x18;
+	
+	//OC1A is set high on compare match.
+	TCCR1A = (1 << COM1A0) | (1 << COM1A1);
+	
+	// Set timer to CTC and prescale Factor on 1024.
+	TCCR1B = (1 << WGM12) | (1 << CS10) |(1 << CS12);
+	
+	// Set Value to around 50ms. 8000000/20480 = 390.625
+	OCR1A = 3906;
+	
+	//clearing the TCNT1 register during initialization.
+	TCNT1 = 0x0;
+	
+	//Compare a match interrupt Enable.
+	TIMSK1 = (1 << OCIE1A);
+	lock(&m1);
+	lock(&m2);
 	
 	spawn(button, 3);
 	spawn(blink, 2);
@@ -168,4 +193,22 @@ int main(void)
 	while (1)
 	{
 	}
+}
+
+//om interrupt på pinb7 yielda
+ISR(PCINT1_vect)
+{
+	if ((PINB >> 7) == 1)
+	{
+		unlock(&m2);
+		
+	}
+}
+//Om timern säger till, yielda
+
+ISR(TIMER1_COMPA_vect)
+{
+	timekeeper = 1;
+	unlock(&m1);
+	
 }

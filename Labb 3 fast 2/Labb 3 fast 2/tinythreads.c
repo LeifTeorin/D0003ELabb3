@@ -27,9 +27,6 @@ thread freeQ   = threads;
 thread readyQ  = NULL;
 thread current = &initp;
 
-mutex m1 = MUTEX_INIT; // för lampan
-mutex m2 = MUTEX_INIT; // för spaken
-int timekeeper = 1;
 int initialized = 0;
 
 static void initialize(void) {
@@ -37,35 +34,11 @@ static void initialize(void) {
 	for (i=0; i<NTHREADS-1; i++)
 	threads[i].next = &threads[i+1];
 	threads[NTHREADS-1].next = NULL;
-	PORTB = (1<<PB7);
-	EIMSK = 0x80;
-	PCMSK1 = 0x80;
-	TCCR1A = 0xC0;
-	TCCR1B = 0x18;
-	
-	//OC1A is set high on compare match.
-	TCCR1A = (1 << COM1A0) | (1 << COM1A1);
-	
-	// Set timer to CTC and prescale Factor on 1024.
-	TCCR1B = (1 << WGM12) | (1 << CS10) |(1 << CS12);
-	
-	// Set Value to around 50ms. 8000000/20480 = 390.625
-	OCR1A = 3906;
-	
-	//clearing the TCNT1 register during initialization.
-	TCNT1 = 0x0;
-	
-	//Compare a match interrupt Enable.
-	TIMSK1 = (1 << OCIE1A);
-	
-	lock(&m1);
-	lock(&m2);
 	
 	initialized = 1;
 }
 
 static void enqueue(thread p, thread *queue) {
-	p->next = NULL;
 	if(*queue == NULL){
 		*queue = p;
 	}else{
@@ -114,19 +87,21 @@ void spawn(void (* function)(int), int arg) {
 
 	enqueue(current, &readyQ);
 	dispatch(newp);
+//	dispatch(newp);
 	ENABLE();
 }
 
 void yield(void) {
 	DISABLE();
+	thread nextthread = dequeue(&readyQ);
 	enqueue(current, &readyQ);
-	dispatch(dequeue(&readyQ));
+	dispatch(nextthread);
 	ENABLE();
 }
 
 void lock(mutex *m) {
 	DISABLE();
-	if(m->locked){
+	if(m->locked == 1){
 		/*if(*m->waitQ == NULL){
 			*m->waitQ = current;
 		}else{
@@ -139,6 +114,7 @@ void lock(mutex *m) {
 		enqueue(current, &(m->waitQ));
 		dispatch(dequeue(&readyQ));
 	}else {
+		enqueue(current, &readyQ);
 		m->locked = 1;
 	}
 	ENABLE();
@@ -158,18 +134,3 @@ void unlock(mutex *m) {
 	ENABLE();
 }
 
-//om interrupt på pinb7 yielda
-ISR(PCINT1_vect)
-{
-	if ((PINB >> 7) == 1)
-	{
-		unlock(&m2);
-	}
-}
-//Om timern säger till, yielda
-
-ISR(TIMER1_COMPA_vect)
-{
-	timekeeper = 1;
-	unlock(&m1);
-}
