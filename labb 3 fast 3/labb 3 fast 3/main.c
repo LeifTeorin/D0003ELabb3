@@ -35,9 +35,9 @@ int characters[13] =
 
 void LCD_init(void){
 	LCDCRA |= 0x80; // LCD enable
-	LCDCRB = 0xb7; // 1/3 bias och 1/4 duty, asynk-klockan används och 25 segment används
-	LCDCCR |= 15; // sätter kontrastkontrollen till 3,35 V
-	LCDFRR = 7;	// sätter prescalern och ger framerate 32 Hz
+	LCDCRB = 0xb7; // 1/3 bias och 1/4 duty, asynk-klockan anvï¿½nds och 25 segment anvï¿½nds
+	LCDCCR |= 15; // sï¿½tter kontrastkontrollen till 3,35 V
+	LCDFRR = 7;	// sï¿½tter prescalern och ger framerate 32 Hz
 }
 
 void writeChar(char ch, int pos){
@@ -49,28 +49,28 @@ void writeChar(char ch, int pos){
 	char currbyte = 0x00;
 	int character = 0;
 	char *ptr;
-	ptr  = &LCDDR0; // pekaren börjar på lcddr0
+	ptr  = &LCDDR0; // pekaren bï¿½rjar pï¿½ lcddr0
 	
 	if((int)ch > -1 && (int)ch < 10){
 		character = characters[(int)ch];
 	}
 	
 	
-	if(pos & 0x01){ // om pos är udda finns det en etta på slutet, då ska den skrivas på de fyra bitarna till vänster på registren
+	if(pos & 0x01){ // om pos ï¿½r udda finns det en etta pï¿½ slutet, dï¿½ ska den skrivas pï¿½ de fyra bitarna till vï¿½nster pï¿½ registren
 		mask_reg = 0x0f;
-		shift = 4; // bitarna som ska skrivas behöver även flyttas för att skrivas på vänster sida
+		shift = 4; // bitarna som ska skrivas behï¿½ver ï¿½ven flyttas fï¿½r att skrivas pï¿½ vï¿½nster sida
 		}else{
 		mask_reg = 0xf0;
 		shift = 0;
 	}
-	ptr = ptr + (pos>>1); // pekaren hamnar på lcddr0, 1 eller 2 beroende på pos
+	ptr = ptr + (pos>>1); // pekaren hamnar pï¿½ lcddr0, 1 eller 2 beroende pï¿½ pos
 	
 	for(int i = 0; i < 4; i++){
-		currbyte = (character & 0x0f); // vi tar de 4 bittarna längst till höger
-		currbyte = currbyte << shift; // bittarna shiftas antingen 0 eller 4 steg åt vänster
-		*ptr = ((*ptr & mask_reg)|currbyte); // registret maskas och fylls sedan in med de bittarna vi hämtat
-		character = (character>>4); // vi tar bort de 4 bittarna till höger
-		ptr += 5; // pekaren går fem register fram för nästa 4 bittar
+		currbyte = (character & 0x0f); // vi tar de 4 bittarna lï¿½ngst till hï¿½ger
+		currbyte = currbyte << shift; // bittarna shiftas antingen 0 eller 4 steg ï¿½t vï¿½nster
+		*ptr = ((*ptr & mask_reg)|currbyte); // registret maskas och fylls sedan in med de bittarna vi hï¿½mtat
+		character = (character>>4); // vi tar bort de 4 bittarna till hï¿½ger
+		ptr += 5; // pekaren gï¿½r fem register fram fï¿½r nï¿½sta 4 bittar
 	}
 }
 
@@ -78,14 +78,14 @@ void writeLong(long i){
 	long y = i;
 	char ch;
 	int cntr = 5;
-	while(y>0){ // så länge talet är störrer än noll eller om vi inte skrivit 6 siffror ska en siffra skrivas
+	while(y>0){ // sï¿½ lï¿½nge talet ï¿½r stï¿½rrer ï¿½n noll eller om vi inte skrivit 6 siffror ska en siffra skrivas
 		if(cntr<0){
 			return;
 		}
-		ch = y%10; // modulo 10 för att få ut siffran till höger
-		writeChar(ch, cntr); // skriv siffran till höger
-		y = y/10; // vi tar bort siffran längst till höger
-		cntr--; // vi börjar till höger och går sedan åt vänster därifrån
+		ch = y%10; // modulo 10 fï¿½r att fï¿½ ut siffran till hï¿½ger
+		writeChar(ch, cntr); // skriv siffran till hï¿½ger
+		y = y/10; // vi tar bort siffran lï¿½ngst till hï¿½ger
+		cntr--; // vi bï¿½rjar till hï¿½ger och gï¿½r sedan ï¿½t vï¿½nster dï¿½rifrï¿½n
 	}
 	
 }
@@ -125,11 +125,11 @@ void blink(void){
 
 void button(void)
 {
-	if (lastvalue) // vi ser om det ena läget är på
+	if (lastvalue) // vi ser om det ena lï¿½get ï¿½r pï¿½
 	{
 		printAt(80, 4);
 	}
-	else // annars är det ju det andra läget
+	else // annars ï¿½r det ju det andra lï¿½get
 	{
 		printAt(8, 4);
 	}
@@ -178,7 +178,7 @@ ISR(PCINT1_vect)
 		spawn(button, 69);
 	}
 }
-//Om timern säger till, yielda
+//Om timern sï¿½ger till, yielda
 
 ISR(TIMER1_COMPA_vect)
 {
