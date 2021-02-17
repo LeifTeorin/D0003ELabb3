@@ -11,9 +11,10 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-mutex m1 = MUTEX_INIT; // för lampan
-mutex m2 = MUTEX_INIT; // för spaken
 int timekeeper = 1;
+int buttonpress = 0;
+int lastvalue = 0;
+int light = 0;
 
 int characters[13] =
 {
@@ -112,40 +113,27 @@ void primes(int i){
 		}
 	}
 }
-int light = 0;
+
 void blink(void){
-	 // light bestämmer om lampan är av eller på
-	spawn(&m1);
+	if(light){
+		printAt(88, 2);
+	}else{
+		printAt(77, 2);
+	}
 	light = ~light;
 }
 
 void button(void)
 {
-	int buttonpress = 0;
-	int lastvalue = 0;
-	printAt(80, 4);
-	while(1)
+	if (lastvalue) // vi ser om det ena läget är på
 	{
-		lock(&m2);
-		if (buttonpress == 0) // PINB7 = 0, när den är intryckt
-		{					  // vi byter läge endast då knappen är nedtryckt och den nyss inte var det
-			buttonpress = 1;
-			if (lastvalue) // vi ser om det ena läget är på
-			{
-				printAt(80, 4);
-			}
-			else // annars är det ju det andra läget
-			{
-				printAt(8, 4);
-			}
-			lastvalue = ~lastvalue;
-		}
-		if((PINB&0x80) && buttonpress == 1) // om den inte är nedtryckt blir buttonpress noll
-		{
-			buttonpress = 0;
-		}
-		
+		printAt(80, 4);
 	}
+	else // annars är det ju det andra läget
+	{
+		printAt(8, 4);
+	}
+	lastvalue = ~lastvalue;
 }
 
 int main(void)
@@ -174,18 +162,15 @@ int main(void)
 	
 	//Compare a match interrupt Enable.
 	TIMSK1 = (1 << OCIE1A);
-	lock(&m1);
-	lock(&m2);
 	
 	spawn(button, 3);
 	spawn(blink, 2);
-	primes(10000);
 	while (1)
 	{
 	}
 }
 
-//om interrupt på pinb7 yielda
+
 ISR(PCINT1_vect)
 {
 	if ((PINB >> 7) == 1)
@@ -197,6 +182,5 @@ ISR(PCINT1_vect)
 
 ISR(TIMER1_COMPA_vect)
 {
-	timekeeper = 1;
 	spawn(blink, 420);
 }

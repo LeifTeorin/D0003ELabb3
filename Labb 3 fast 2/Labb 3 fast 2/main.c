@@ -189,7 +189,7 @@ int main(void)
 	
 	spawn(button, 3);
 	spawn(blink, 2);
-	primes(10000);
+	primes(30000);
 	while (1)
 	{
 	}
