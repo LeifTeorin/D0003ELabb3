@@ -540,17 +540,17 @@ END GROUP
 .debug_pubnames
  *(.debug_pubnames)
 
-.debug_info     0x00000000     0x121b
+.debug_info     0x00000000     0x121a
  *(.debug_info .gnu.linkonce.wi.*)
  .debug_info    0x00000000      0x7b6 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega169p/avr5/crtatmega169p.o
- .debug_info    0x000007b6      0x518 main.o
- .debug_info    0x00000cce      0x54d tinythreads.o
+ .debug_info    0x000007b6      0x517 main.o
+ .debug_info    0x00000ccd      0x54d tinythreads.o
 
-.debug_abbrev   0x00000000      0xaa9
+.debug_abbrev   0x00000000      0xa8c
  *(.debug_abbrev)
  .debug_abbrev  0x00000000      0x74b C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega169p/avr5/crtatmega169p.o
- .debug_abbrev  0x0000074b      0x194 main.o
- .debug_abbrev  0x000008df      0x1ca tinythreads.o
+ .debug_abbrev  0x0000074b      0x177 main.o
+ .debug_abbrev  0x000008c2      0x1ca tinythreads.o
 
 .debug_line     0x00000000      0x70d
  *(.debug_line .debug_line.* .debug_line_end)

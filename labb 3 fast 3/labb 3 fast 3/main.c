@@ -136,7 +136,6 @@ void button(void)
 	}
 	lastvalue = ~lastvalue;
 	buttoncount +=1;
-	
 }
 
 int main(void)

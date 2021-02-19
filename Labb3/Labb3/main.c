@@ -27,7 +27,7 @@ int characters[13] =
 	0x1510		// J
 };
 
-mutex blinkmutex = MUTEX_INIT;
+//mutex blinkmutex = MUTEX_INIT;
 mutex writemutex = MUTEX_INIT;
 
 void LCD_init(void){
@@ -114,12 +114,9 @@ void primes(int i){
 }
 
 void blink(int something){
-	int light = 0; // light bestämmer om lampan är av eller på
-	// short är 2 byte, precis som timern, alltså kommer den att börja om på noll lika fort som timerregistret
-	//TCNT1 = 0x0000;
+	int light = 0; 
 	
 	while(1){
-		//lock(&blinkmutex);
 		int lasttime = giveTime();
 		if(lasttime >= 10){
 			if(light){
@@ -130,7 +127,6 @@ void blink(int something){
 			light = ~light; // vi ändrar light för att indikera att lampan är av/på
 			resetTime();
 		}
-		//unlock(&blinkmutex);
 	}
 	
 }
@@ -152,7 +148,7 @@ void button(int something)
 		uint8_t butn = PINB>>7; 
 		was_released |= butn;
 		if (butn==0 && was_released > 0) // PINB7 = 0, när den är intryckt
-		{									  // vi byter läge endast då knappen är nedtryckt och den nyss inte var det
+		{									  
 			buttonpress = 1;
 			++buttoncount;
 			printAt(buttoncount, 4);
@@ -169,7 +165,6 @@ void button(int something)
 
 int main(void)
 {
-	/* Replace with your application code */
 	CLKPR = 0x80;
 	CLKPR = 0x00;
 	
@@ -177,7 +172,6 @@ int main(void)
 	spawn(primes, 10000);
 	spawn(button, 1);
 	blink(30000);
-	//button(4546);
 	while (1)
 	{
 	}

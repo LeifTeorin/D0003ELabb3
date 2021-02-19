@@ -115,15 +115,6 @@ void yield(void) {
 void lock(mutex *m) {
 	DISABLE();
 	if(m->locked){
-		/*if(*m->waitQ == NULL){
-			*m->waitQ = current;
-		}else{
-			thread q = *m->waitQ;
-			while (q->next){
-				q = q->next;
-			}
-			q->next = current;
-		}*/
 		enqueue(current, &(m->waitQ));
 		dispatch(dequeue(&readyQ));
 	}else {
@@ -133,7 +124,11 @@ void lock(mutex *m) {
 }
 
 int giveTime(void){
-	return timekeeper;
+	DISABLE();
+	int timusmaximus = timekeeper; // vi slår av interrupts vid läsning så den inte kan ändras
+	ENABLE();
+	return timusmaximus;
+	
 }
 
 void resetTime(void){
