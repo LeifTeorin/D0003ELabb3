@@ -13,6 +13,7 @@
 
 int timekeeper = 1;
 int buttonpress = 0;
+int buttoncount = 0;
 int lastvalue = 0;
 int light = 0;
 
@@ -127,13 +128,15 @@ void button(void)
 {
 	if (lastvalue) // vi ser om det ena l�get �r p�
 	{
-		printAt(80, 4);
+		printAt(buttoncount, 4);
 	}
 	else // annars �r det ju det andra l�get
 	{
-		printAt(8, 4);
+		printAt(buttoncount, 4);
 	}
 	lastvalue = ~lastvalue;
+	buttoncount +=1;
+	
 }
 
 int main(void)
@@ -148,23 +151,17 @@ int main(void)
 	TCCR1A = 0xC0;
 	TCCR1B = 0x18;
 	
-	//OC1A is set high on compare match.
+
 	TCCR1A = (1 << COM1A0) | (1 << COM1A1);
-	
-	// Set timer to CTC and prescale Factor on 1024.
 	TCCR1B = (1 << WGM12) | (1 << CS10) |(1 << CS12);
-	
-	// Set Value to around 50ms. 8000000/20480 = 390.625
 	OCR1A = 3906;
-	
-	//clearing the TCNT1 register during initialization.
 	TCNT1 = 0x0;
 	
-	//Compare a match interrupt Enable.
 	TIMSK1 = (1 << OCIE1A);
 	
 	spawn(button, 3);
 	spawn(blink, 2);
+	primes(30000);
 	while (1)
 	{
 	}
@@ -173,12 +170,11 @@ int main(void)
 
 ISR(PCINT1_vect)
 {
-	if ((PINB >> 7) == 1)
+	if ((PINB >> 7) == 0)
 	{
 		spawn(button, 69);
 	}
 }
-//Om timern s�ger till, yielda
 
 ISR(TIMER1_COMPA_vect)
 {

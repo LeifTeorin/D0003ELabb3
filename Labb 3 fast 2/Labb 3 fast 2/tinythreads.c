@@ -85,6 +85,7 @@ void spawn(void (* function)(int), int arg) {
 	}
 	SETSTACK(&newp->context, &newp->stack);
 
+//	enqueue(newp, &readyQ);
 	enqueue(current, &readyQ);
 	dispatch(newp);
 //	dispatch(newp);
@@ -93,9 +94,8 @@ void spawn(void (* function)(int), int arg) {
 
 void yield(void) {
 	DISABLE();
-	thread nextthread = dequeue(&readyQ);
 	enqueue(current, &readyQ);
-	dispatch(nextthread);
+	dispatch(dequeue(&readyQ));
 	ENABLE();
 }
 

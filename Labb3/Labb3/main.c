@@ -28,6 +28,7 @@ int characters[13] =
 };
 
 mutex blinkmutex = MUTEX_INIT;
+mutex writemutex = MUTEX_INIT;
 
 void LCD_init(void){
 	LCDCRA |= 0x80; // LCD enable
@@ -37,6 +38,7 @@ void LCD_init(void){
 }
 
 void writeChar(char ch, int pos){
+	lock(&writemutex);
 	if((pos>5) | (pos<0)){
 		return;
 	}
@@ -68,6 +70,7 @@ void writeChar(char ch, int pos){
 		character = (character>>4); // vi tar bort de 4 bittarna till höger
 		ptr += 5; // pekaren går fem register fram för nästa 4 bittar
 	}
+	unlock(&writemutex);
 }
 
 void writeLong(long i){
@@ -116,46 +119,51 @@ void blink(int something){
 	//TCNT1 = 0x0000;
 	
 	while(1){
-		lock(&blinkmutex);
-		if(timekeeper > 10){
+		//lock(&blinkmutex);
+		int lasttime = giveTime();
+		if(lasttime >= 10){
 			if(light){
 				printAt(0, 2); // om den är på slår vi av den
 				}else{
-				printAt(69, 2); // annars slår vi på den
+				printAt(11, 2); // annars slår vi på den
 			}
 			light = ~light; // vi ändrar light för att indikera att lampan är av/på
-			timekeeper = 0;
+			resetTime();
 		}
-		unlock(&blinkmutex);
+		//unlock(&blinkmutex);
 	}
 	
+}
+
+int gettime(void){
+	return timekeeper;
 }
 
 void button(int something)
 {
 	int buttonpress = 0;
 	int lastvalue = 0;
-	printAt(80, 4);
+	long buttoncount = 0;
+	uint8_t was_released = 0;
+	
+	//printAt(buttoncount, 4);
 	while(1)
 	{
-		if (!(PINB&0x80) && buttonpress == 0) // PINB7 = 0, när den är intryckt
+		uint8_t butn = PINB>>7; 
+		was_released |= butn;
+		if (butn==0 && was_released > 0) // PINB7 = 0, när den är intryckt
 		{									  // vi byter läge endast då knappen är nedtryckt och den nyss inte var det
 			buttonpress = 1;
-			if (lastvalue) // vi ser om det ena läget är på
-			{
-				printAt(80, 4);
-			}
-			else // annars är det ju det andra läget
-			{
-				printAt(8, 4);
-			}
-			lastvalue = ~lastvalue;
+			++buttoncount;
+			printAt(buttoncount, 4);
+			was_released = 0;
 		}
-		if((PINB&0x80) && buttonpress == 1) // om den inte är nedtryckt blir buttonpress noll
+		if((PINB>>7) == 1)// om den inte är nedtryckt blir buttonpress noll
 		{
 			buttonpress = 0;
+			//printAt(buttoncount, 4);
 		}
-		
+
 	}
 }
 
@@ -169,7 +177,7 @@ int main(void)
 	spawn(primes, 10000);
 	spawn(button, 1);
 	blink(30000);
-	
+	//button(4546);
 	while (1)
 	{
 	}

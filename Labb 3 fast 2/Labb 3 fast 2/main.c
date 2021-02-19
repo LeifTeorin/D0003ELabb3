@@ -10,9 +10,12 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+
 mutex m1 = MUTEX_INIT; // för lampan
 mutex m2 = MUTEX_INIT; // för spaken
+mutex writem = MUTEX_INIT;
 int timekeeper = 1;
+//int buttoncount = 0;
 
 int characters[13] =
 {
@@ -39,6 +42,7 @@ void LCD_init(void){
 }
 
 void writeChar(char ch, int pos){
+	//lock(&writem);
 	if((pos>5) | (pos<0)){
 		return;
 	}
@@ -70,6 +74,7 @@ void writeChar(char ch, int pos){
 		character = (character>>4); // vi tar bort de 4 bittarna till höger
 		ptr += 5; // pekaren går fem register fram för nästa 4 bittar
 	}
+	//unlock(&writem);
 }
 
 void writeLong(long i){
@@ -117,44 +122,33 @@ void blink(void){
 	
 	while(1){
 		lock(&m1);
-		if(timekeeper){
-			if(light){
-				printAt(0, 2); // om den ?r p? sl?r vi av den
-				}else{
-				printAt(69, 2); // annars sl?r vi p? den
-			}
-			light = ~light; // vi ?ndrar light f?r att indikera att lampan ?r av/p?
-			timekeeper = 0;
+		if(light){
+			printAt(0, 2); // om den ?r p? sl?r vi av den
+			}else{
+			printAt(11, 2); // annars sl?r vi p? den
 		}
+		light = ~light; // vi ?ndrar light f?r att indikera att lampan ?r av/p?
 	}
 }
 
 void button(void)
 {
+	int buttoncount = 0;
 	int buttonpress = 0;
 	int lastvalue = 0;
-	printAt(80, 4);
+	uint8_t was_released = 0;
+	
 	while(1)
 	{
 		lock(&m2);
-		if (buttonpress == 0) // PINB7 = 0, när den är intryckt
-		{					  // vi byter läge endast då knappen är nedtryckt och den nyss inte var det
+		uint8_t butn = PINB>>7;
+		if (butn==0) // PINB7 = 0, n?r den ?r intryckt
+		{									  // vi byter l?ge endast d? knappen ?r nedtryckt och den nyss inte var det
 			buttonpress = 1;
-			if (lastvalue) // vi ser om det ena läget är på
-			{
-				printAt(80, 4);
-			}
-			else // annars är det ju det andra läget
-			{
-				printAt(8, 4);
-			}
-			lastvalue = ~lastvalue;
+			printAt(buttoncount, 4);
+			was_released = 0;
+			buttoncount ++;
 		}
-		if((PINB&0x80) && buttonpress == 1) // om den inte är nedtryckt blir buttonpress noll
-		{
-			buttonpress = 0;
-		}
-		
 	}
 }
 
@@ -169,20 +163,11 @@ int main(void)
 	PCMSK1 = 0x80;
 	TCCR1A = 0xC0;
 	TCCR1B = 0x18;
-	
-	//OC1A is set high on compare match.
+
 	TCCR1A = (1 << COM1A0) | (1 << COM1A1);
-	
-	// Set timer to CTC and prescale Factor on 1024.
 	TCCR1B = (1 << WGM12) | (1 << CS10) |(1 << CS12);
-	
-	// Set Value to around 50ms. 8000000/20480 = 390.625
 	OCR1A = 3906;
-	
-	//clearing the TCNT1 register during initialization.
 	TCNT1 = 0x0;
-	
-	//Compare a match interrupt Enable.
 	TIMSK1 = (1 << OCIE1A);
 	lock(&m1);
 	lock(&m2);
@@ -198,17 +183,15 @@ int main(void)
 //om interrupt på pinb7 yielda
 ISR(PCINT1_vect)
 {
-	if ((PINB >> 7) == 1)
+	if ((PINB >> 7) == 0)
 	{
+//		buttoncount++;
 		unlock(&m2);
-		
 	}
 }
 //Om timern säger till, yielda
 
 ISR(TIMER1_COMPA_vect)
 {
-	timekeeper = 1;
 	unlock(&m1);
-	
 }
